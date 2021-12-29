@@ -14,8 +14,7 @@ async def get_posts(db: Session = Depends(get_db)):
  
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostRespose)
 async def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    print(f"This is the User's user_id.id: ", current_user.id)
-    new_post = models.Post(**post.dict())
+    new_post = models.Post(owner_id=current_user.id, **post.dict())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -23,17 +22,20 @@ async def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), 
 
 @router.get("/{id}", response_model=schemas.PostRespose)
 async def get_post(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    post = db.query(models.Post).filter(models.Post.id == id).first()
+    post = db.query(models.Post).filter(models.Post.owner_id == current_user.id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post {id} not found")
     return post
  
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
-    post = db.query(models.Post).filter(models.Post.id == id)
-    if post.first() == None:
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    post = post_query.first()
+    if post == None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post {id} was not found")
-    post.delete(synchronize_session=False)
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You do not have permission to delete this post")
+    post_query.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -44,6 +46,9 @@ async def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(g
     if new_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post {id} was not found")
     
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You do not have permission to modify this post")
+
     post_query.update(post.dict(), synchronize_session=False)
     db.commit()
 
