@@ -8,7 +8,7 @@ from ..database import get_db
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 @router.get("/", response_model=list[schemas.PostRespose], status_code=status.HTTP_200_OK)
-async def get_posts(db: Session = Depends(get_db), limit: int = 10, skip: int = 0, search: Optional[str] = None):
+async def get_posts(db: Session = Depends(get_db), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts
  
