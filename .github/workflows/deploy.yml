@@ -1,0 +1,51 @@
+name: test and deploy api
+
+on: [push, pull_request]
+
+jobs:
+  job1:
+    environment:
+      name: test
+    env:
+    DATABASE_HOSTNAME: ${{secrets.DATABASE_HOSTNAME}}
+    DATABASE_USERNAME: ${{secrets.DATABASE_USERNAME}}
+    DATABASE_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
+    DATABASE_NAME: ${{secrets.DATABASE_NAME}}
+    DATABASE_PORT: ${{secrets.DATABASE_PORT}}
+    SECRET_KEY: ${{secrets.SECRET_KEY}}
+    ALGORITHM: ${{secrets.ALGORITHM}}
+    ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
+
+  services: 
+    postgres:
+      image: postgres
+      env:
+        - POSTGRES_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
+        - POSTGRES_USER: ${{secrets.DATABASE_USERNAME}}
+        - POSTGRES_DB: ${{secrets.DATABASE_NAME}}
+      ports:
+        - "5432:5432"
+      options: >-
+        --health-cmd pg-isready
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
+
+  runs-on: ubuntu-latest
+  steps:
+    - name: checkout repo
+      uses: actions/checkout@v2
+    - name: install python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: update pip
+      run: |
+        pip install --upgrade pip
+    - name: install requirements
+      run: |
+        pip install -r requirements.txt
+    - name: run tests with pytest
+      run: |
+        pip3 install pytest
+        pytest
