@@ -35,17 +35,17 @@ jobs:
   steps:
     - name: checkout repo
       uses: actions/checkout@v2
-    - name: install python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    - name: update pip
-      run: |
-        pip install --upgrade pip
-    - name: install requirements
-      run: |
-        pip install -r requirements.txt
-    - name: run tests with pytest
-      run: |
-        pip3 install pytest
-        pytest
+    # - name: install python 3.9
+    #   uses: actions/setup-python@v2
+    #   with:
+    #     python-version: 3.9
+    # - name: update pip
+    #   run: |
+    #     pip install --upgrade pip
+    # - name: install requirements
+    #   run: |
+    #     pip install -r requirements.txt
+    # - name: run tests with pytest
+    #   run: |
+    #     pip3 install pytest
+    #     pytest
